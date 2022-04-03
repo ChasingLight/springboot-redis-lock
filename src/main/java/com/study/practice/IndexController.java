@@ -83,6 +83,10 @@ public class IndexController {
     public void test3() {
 
         //synchronized保证同一个应用，线程之间的并发正确性
+
+        /*思考：去掉-节点中的synchronized关键字，仍旧可以保证【进程内的线程的并发安全性】
+        1>加上synchronized，同一时间QPS最大为节点数。先打到【节点内部线程synchronized锁】，然后再打到【Redis进程间的分布式锁】。
+        2>不加synchronized，QPS可以更大，直接打到最终的Redis分布式锁这里。【但是节点内部可能出现boolean result出现空指针】*/
         synchronized (this) {
             String stockKey = "product_1001";   //分布式锁粒度：某一件具体商品库存
             String requestUUID = UUID.randomUUID().toString();
@@ -105,7 +109,7 @@ public class IndexController {
                     redisTemplate.delete(stockKey);
                 }
             }
-        }
+        }  //end synchronized
     }
 
     /**
@@ -157,7 +161,7 @@ public class IndexController {
 
         //模拟真实环境，随机的业务执行时间---当前线程随机睡眠[0,6]秒时间
         Random random = new Random();
-        int sleepSeconds = random.nextInt(6) * 1000;
+        int sleepSeconds = random.nextInt(2) * 1000;
         try {
             Thread.sleep(sleepSeconds);
         } catch (InterruptedException e) {
